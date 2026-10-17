@@ -25,6 +25,7 @@ terraform validate -no-color
 - The keys come from `var.cloudflare_zone_name`, not the zone data source, so they are known at plan time.
 - **Ordering:** DNS records → `time_sleep` (`wait_for_dns_propagation`, default `120s`) → the `cname-delegation` custom domains, because Azure checks the CNAME as soon as the domain is created. The apex custom domain is created first, because its TXT record needs the validation token it returns.
 - The TXT record ignores changes to `content`, so a later token rotation doesn't show up as drift.
+- Both custom domains ignore `validation_type`: Azure doesn't return it, so it is empty in state after an import, and a diff would recreate the domain.
 - Records are DNS-only (`proxied = false`) so Azure can issue and renew the managed certificates, use `ttl = 1` (automatic) and carry a `comment`.
 - The Static Web App ignores `repository_*` attributes because content is pushed with the deployment token, not from a linked repo.
 
