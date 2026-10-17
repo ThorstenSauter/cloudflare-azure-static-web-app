@@ -34,6 +34,12 @@ resource "azurerm_static_web_app_custom_domain" "apex" {
   static_web_app_id = azurerm_static_web_app.main.id
   domain_name       = each.value
   validation_type   = "dns-txt-token"
+
+  # Azure doesn't return the validation type, so it is empty in state after an import. It only matters on creation,
+  # and a diff here would recreate the domain.
+  lifecycle {
+    ignore_changes = [validation_type]
+  }
 }
 
 resource "cloudflare_dns_record" "apex_validation" {
@@ -99,4 +105,10 @@ resource "azurerm_static_web_app_custom_domain" "subdomain" {
   validation_type   = "cname-delegation"
 
   depends_on = [time_sleep.dns_propagation]
+
+  # Azure doesn't return the validation type, so it is empty in state after an import. It only matters on creation,
+  # and a diff here would recreate the domain.
+  lifecycle {
+    ignore_changes = [validation_type]
+  }
 }
