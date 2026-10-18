@@ -23,7 +23,7 @@ terraform validate -no-color
 
 - **for_each keys are a contract.** The apex resources are keyed by the zone name (`apex["example.com"]`), the subdomain resources by their label (`subdomain["www"]`), and `time_sleep.dns_propagation` is `[0]`. Consumers migrated onto the module with `moved` blocks that target these addresses, so renaming a resource or changing its keys recreates the Static Web App custom domains (downtime) in every consumer. Treat any such change as breaking and ship `moved` blocks inside the module.
 - The keys come from `var.cloudflare_zone_name`, not the zone data source, so they are known at plan time.
-- **Ordering:** DNS records → `time_sleep` (`wait_for_dns_propagation`, default `120s`) → the `cname-delegation` custom domains, because Azure checks the CNAME as soon as the domain is created. The apex custom domain is created first, because its TXT record needs the validation token it returns.
+- **Ordering:** DNS records → `time_sleep` (`wait_for_dns_propagation`, default `120s`) → the `cname-delegation` custom domains, because Azure checks the CNAME as soon as the domain is created. The apex custom domain is created first, because its TXT record needs the validation token it returns. The `time_sleep` is keyed on the CNAME record IDs (`triggers`), so adding a subdomain or recreating a record waits again.
 - The TXT record ignores changes to `content`, so a later token rotation doesn't show up as drift.
 - Both custom domains ignore `validation_type`: Azure doesn't return it, so it is empty in state after an import, and a diff would recreate the domain.
 - Records are DNS-only (`proxied = false`) so Azure can issue and renew the managed certificates, use `ttl = 1` (automatic) and carry a `comment`.
