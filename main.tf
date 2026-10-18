@@ -84,11 +84,15 @@ resource "cloudflare_dns_record" "subdomain" {
   comment = "Azure Static Web App ${azurerm_static_web_app.main.name}"
 }
 
-# Azure checks the CNAME as soon as a cname-delegation domain is created, so give DNS time to propagate.
+# Azure checks the CNAME as soon as a cname-delegation domain is created, so give DNS time to propagate. Keyed on the
+# CNAME records so that adding a subdomain or recreating a record waits again: without triggers the sleep only runs
+# once, and a later record would be checked by Azure before it resolves.
 resource "time_sleep" "dns_propagation" {
   count = length(local.subdomain_domains) > 0 ? 1 : 0
 
   create_duration = var.wait_for_dns_propagation
+
+  triggers = { for label, record in cloudflare_dns_record.subdomain : label => record.id }
 
   depends_on = [
     cloudflare_dns_record.apex_validation,
